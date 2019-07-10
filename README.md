@@ -1,6 +1,6 @@
 # awesome tools for me
  
-- dataloader
+- dataloader(mnist, scifar10, svhn, dsprites, lpc)
 - trainer
 - logger: logging hyperparameter, model, sorce file
 - docker files: pytorch and jupyter notebook
