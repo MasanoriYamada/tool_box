@@ -1,18 +1,15 @@
-import pickle
-import numpy as np
-import torch
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
-
 import os
 import base64
 import time
 from selenium import webdriver
 from PIL import Image
 import numpy as np
+import pickle
 import torch
 import torchvision.transforms as transforms
-import pickle
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+
 
 
 
