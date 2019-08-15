@@ -46,7 +46,7 @@ for i in range(N_GPU):
     q.put(i)
 
 def runner(i, cmd):
-    gpu = q.get()
+    gpu = q.get() % N_GPU
     print('In gpu: {}, cmd: {}'.format(gpu, cmd))
     time.sleep(gpu*5)  # for avoinding conflict
     subprocess.run("CUDA_VISIBLE_DEVICES=%d %s" % (gpu, cmd), shell=True, check=True)
