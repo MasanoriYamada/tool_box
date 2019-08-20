@@ -1,13 +1,32 @@
-version: '3'
+version: '2.3'
 
 services:
   deep_lab:
-    build: ..
-    container_name: "stock_deep_lab"
+    #image: deep_lab:1.0
+    build: ./
+    container_name: "deep_lab"
     working_dir: "/workspace"
     ports:
     - "6006:6006"
     - "8888:8888"
+    #runtime: nvidia
     volumes:
     - .:/workspace
+    shm_size: 16G
     tty: true
+
+  db:
+    image: mysql:5.7
+    container_name: 'db'
+    ports:
+        - "3306:3306"
+    volumes:
+        # 初期データを投入するSQLが格納されているdir
+        - ./db/mysql_init:/docker-entrypoint-initdb.d
+        # 永続化するときにマウントするdir
+        - ./db/mysql_data:/var/lib/mysql
+    environment:
+        MYSQL_ROOT_PASSWORD: [PASSWARD]
+        MYSQL_USER: [USERNAME]
+        MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+        MYSQL_DATABASE: optuna
