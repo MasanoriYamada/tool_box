@@ -1,5 +1,5 @@
 import argparse
-from util import Logger
+from utils import Logger
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch', type=int, default=128, metavar='N',

@@ -1,4 +1,4 @@
-from util import set_logger
+from utils import set_logger
 import logging
 
 logger = set_logger()
