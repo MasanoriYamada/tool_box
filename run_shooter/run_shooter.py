@@ -3,54 +3,66 @@ import threading
 from joblib import Parallel, delayed
 import queue
 import os
+import sys
 import time
 import subprocess
+try:
+    import torch
+except ImportError:
+    pass
 
-### common setting
-task = 0
-N_GPU = 2  # max gpu in machine
-repeats = 5
-epoch = 5000
-test = 10
-dataset = 'mnist'
+# Common settings
+TASK = 0
+N_GPU = 3  # max gpu in machine
 
-##################### task queue
+# Task queue
 cmd_list = []
 
-
-if task == 0:
-    description = 'search learning rae'
-
-    lrs = [0.001, 0.001, 0.01, 0.1]
-    save_dir = 'log/' + dataset + '/vae'
-    for repeat in range(repeats):
-        for lr in lrs:
-            tmp = 'python main.py --data {} --epochs {} --dir {} --seed {} --test {} --lr {} --description \'{}\''.format(
-                dataset, epoch, save_dir, repeat, test, lr, description)
-            cmd_list.append(tmp)
-
+if TASK == 0:
+    # 会話生成と評価のタスクを追加
+    # base vs base
+    cmd_list.append('uv run python example.py --seed 0')
 else:
     print('no task')
 
-#####################
-os.makedirs(save_dir, exist_ok=True)
+print(f'task No: {TASK}')
+print(f'Number of jobs: {len(cmd_list)}')
+
+try:
+    n_actual_gpu = torch.cuda.device_count()
+except (ImportError, AttributeError):
+    n_actual_gpu = 0
+
+for cmd in cmd_list:
+    print(cmd)
+print(f'Total GPUS: {n_actual_gpu}')
+print('run? [Y/N]')
+y_n = str(input()).upper()
+if y_n != 'Y':
+    print('terminate')
+    sys.exit()
+
 _print = print
 _rlock = threading.RLock()
 
 def print(*args, **kwargs):
     with _rlock:
         _print(*args, **kwargs)
-        
+
 q = queue.Queue(maxsize=N_GPU)
 for i in range(N_GPU):
     q.put(i)
 
 def runner(i, cmd):
     gpu = q.get() % N_GPU
-    print('In gpu: {}, cmd: {}'.format(gpu, cmd))
-    time.sleep(gpu*5)  # for avoinding conflict
-    subprocess.run("CUDA_VISIBLE_DEVICES=%d %s" % (gpu, cmd), shell=True, check=True)
+    global n_actual_gpu
+    if n_actual_gpu == 0:
+        n_actual_gpu = 1
+    act_gpu = gpu % n_actual_gpu
+    print(f'In gpu: {act_gpu}, cmd: {cmd}')
+    time.sleep(gpu * 5)  # for avoiding conflict
+    subprocess.run(f"CUDA_VISIBLE_DEVICES={act_gpu} {cmd}", shell=True, check=True)
     q.put(gpu)
 
-# job start
+# Job start
 Parallel(n_jobs=N_GPU, backend="threading")(delayed(runner)(i, cmd) for i, cmd in enumerate(cmd_list))
